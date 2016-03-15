@@ -4,8 +4,7 @@ var config = {
     devPort: 3001,
     goServerUrl: 'https://ci.example.com.net',
     goUser: 'xxx',
-    goPassword: 'xxx'
     goPassword: 'xxx',
-    goPollingInterval: 30000
+    goPollingInterval: 10000
 }
 module.exports = config;

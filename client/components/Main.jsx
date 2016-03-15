@@ -50,7 +50,7 @@ export default class Main extends React.Component {
 
     socket.on('pipelines:update', (newPipelines) => {
       let sortedPipelines = newPipelines.filter(p => p && p.name).sort((a, b) => {
-        return a.results[0].buildtime > b.results[0].buildtime ? -1 : 1;
+        return a.buildtime > b.buildtime ? -1 : 1;
       });
       this.setState({
         pipelines : sortedPipelines

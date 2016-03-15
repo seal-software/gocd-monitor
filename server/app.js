@@ -3,18 +3,18 @@
 import express from 'express';
 import path from 'path';
 import socketio from 'socket.io';
-import { parseString } from 'xml2js';
+import fs from 'fs';
 
 import * as conf from '../app-config';
-import GoService from './services/GoService';
+import SealBuildMonitorService from './services/SealBuildMonitorService';
 
 
 const routes = require('./routes/index'),
       dev = require('./routes/dev'),
       app = express(),
       io = socketio(),
-      devMode = app.get('env') === 'development',
-      goService = new GoService();
+      devMode = app.get('env') === 'development';
+
 let pollingId,
     pipelines = [],
     isPolling = false;
@@ -48,43 +48,28 @@ app.use((err, req, res, next) => {
 app.io = io;
 
 io.on('connection', (socket) => {
-  console.log('Client connected');
 
   // Emit latest pipeline result
   socket.emit('pipelines:update', pipelines);
 
   // Function that refreshes all pipelines
-  let refreshPipelines = (pipelineNames) => {
-    console.log(`Refreshing ${pipelineNames.length} pipelines`);
-    let currentPipelines = [];
-    pipelineNames.forEach((name) => {
-      goService.getPipelineHistory(name).then((pipeline) => {
-        currentPipelines.push(pipeline);
-        if (currentPipelines.length === pipelineNames.length) {
-          pipelines = currentPipelines;
-          socket.emit('pipelines:update', pipelines);
-        }
-      });
+  let refreshPipelines = () => {
+    fs.readFile('/Users/matros/Development/projects/seal/seal-build-tools/buildmonitor/out/status.json', (err, data) => {
+      if (err) {
+        throw err;
+      }
+      pipelines = SealBuildMonitorService.sealPipelinesToPipelineResult(JSON.parse(data));
+      socket.emit('pipelines:update', pipelines);
     });
   };
 
   // Fetch the pipelines and start polling pipeline history
   if (!pollingId && !isPolling) {
     isPolling = true;
-    goService.getAllPipelines()
-    .then((pipelineNames) => {
-      refreshPipelines(pipelineNames);
-      pollingId = setInterval(refreshPipelines, conf.goPollingInterval, pipelineNames);
-    })
-    .catch((err) => {
-      console.err('Failed to get all pipelines');
-      isPolling = false;
-    });
+    refreshPipelines();
+    pollingId = setInterval(refreshPipelines, conf.goPollingInterval);
   }
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-  });
 });
 
 module.exports = app;
