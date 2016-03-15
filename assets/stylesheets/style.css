@@ -106,6 +106,7 @@ a {
 div.buildtitle > div {
   width: 80%;
 }
+
 div.buildtitle span {
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -132,6 +133,9 @@ div.buildinfo .progress {
 }
 div.buildinfo > div > p {
   margin: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 div.buildinfo span {
   padding-left: 10px;
