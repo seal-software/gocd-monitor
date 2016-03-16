@@ -3,18 +3,21 @@
 import express from 'express';
 import path from 'path';
 import socketio from 'socket.io';
-import { parseString } from 'xml2js';
+import fs from 'fs';
 
 import * as conf from '../app-config';
-import GoService from './services/GoService';
+import SealBuildMonitorService from './services/SealBuildMonitorService';
 
 
 const routes = require('./routes/index'),
       dev = require('./routes/dev'),
       app = express(),
       io = socketio(),
-      devMode = app.get('env') === 'development',
-      goService = new GoService();
+      devMode = app.get('env') === 'development';
+
+let pollingId,
+    pipelines = [],
+    isPolling = false;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -41,20 +44,32 @@ app.use((err, req, res, next) => {
   res.sendFile('error-' + err.status + '.html', { root : 'server/views' });
 });
 
-// Start polling go server
-goService.startPolling();
-
 // socket.io setup
 app.io = io;
 
 io.on('connection', (socket) => {
-  console.log('Client connected');
-  goService.registerClient(socket);
 
-  socket.on('disconnect', () => {
-    console.log('Client disconnected');
-    goService.unregisterClient(socket);
-  });
+  // Emit latest pipeline result
+  socket.emit('pipelines:update', pipelines);
+
+  // Function that refreshes all pipelines
+  let refreshPipelines = () => {
+    fs.readFile('/Users/matros/Development/projects/seal/seal-build-tools/buildmonitor/out/status.json', (err, data) => {
+      if (err) {
+        throw err;
+      }
+      pipelines = SealBuildMonitorService.sealPipelinesToPipelineResult(JSON.parse(data));
+      socket.emit('pipelines:update', pipelines);
+    });
+  };
+
+  // Fetch the pipelines and start polling pipeline history
+  if (!pollingId && !isPolling) {
+    isPolling = true;
+    refreshPipelines();
+    pollingId = setInterval(refreshPipelines, conf.goPollingInterval);
+  }
+
 });
 
 module.exports = app;
