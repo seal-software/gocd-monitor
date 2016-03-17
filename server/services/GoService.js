@@ -11,7 +11,6 @@ export default class GoService extends Service {
     this.baseUrl = conf.goServerUrl + '/go/api';
     this.user = conf.goUser;
     this.password = conf.goPassword;
-    this.pipelines = [];
   }
 
   /**
@@ -103,8 +102,8 @@ export default class GoService extends Service {
     // Pipeline name
     result.name = pipelines[0].name;
 
-    // Pipeline is paused if can_run property is set to false
-    let paused = !pipelines[0].can_run;
+    // Pipeline is paused if all stages can_run property is set to false
+    let paused = !pipelines[0].stages.some(stage => stage.can_run === true);
 
     // Result array
     result.results = pipelines.map((p) => {

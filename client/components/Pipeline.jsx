@@ -51,7 +51,7 @@ export default class Pipeline extends React.Component {
    * @param pipeline
    */
   weatherIcon(pipeline) {
-    return pipeline.status === 'failed' ? weatherIconStatuses[5] : weatherIconStatuses[0];
+    return weatherIconStatuses[pipeline.health];
   }
 
   render() {
