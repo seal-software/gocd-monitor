@@ -6,17 +6,11 @@ import React from 'react';
 
 import io from 'socket.io-client';
 
-import { Dialog, FlatButton, FloatingActionButton } from 'material-ui/lib';
 import MuiThemeProvider from 'material-ui/lib/MuiThemeProvider';
-import { Card, CardHeader, CardText } from 'material-ui/lib/card';
 import Colors from 'material-ui/lib/styles/colors';
-import ContentAdd from 'material-ui/lib/svg-icons/content/add';
 import getMuiTheme from 'material-ui/lib/styles/getMuiTheme';
 
 import Pipeline from './Pipeline';
-
-// Setup socket.io
-const socket = io();
 
 
 // FIXME: Break out to style.css
@@ -44,56 +38,36 @@ export default class Main extends React.Component {
   constructor(props, context) {
     super(props, context);
 
-    // Setup event handlers
-    this.handleRequestClose = this.handleRequestClose.bind(this);
-    this.handleTouchTap = this.handleTouchTap.bind(this);
-
-    socket.on('pipelines:update', (newPipelines) => {
-      let sortedPipelines = newPipelines.filter(p => p && p.name).sort((a, b) => {
-        return a.buildtime > b.buildtime ? -1 : 1;
-      });
-      this.setState({
-        pipelines : sortedPipelines
-      })
-    });
     // Setup initial state
     this.state = {
-      open: false,
-      // In adminMode new pipelines can be added
-      adminMode: window.location.search.indexOf('mode=admin') >= 0,
       // All pipelines
       pipelines: []
     };
   }
 
-  handleRequestClose() {
-    this.setState({
-      open: false,
+  componentDidMount() {
+    const socket = io();
+    // Setup socket.io and listen for updates
+    socket.on('pipelines:update', (newPipelines) => {
+      this.setState({
+        pipelines: this.sortPipelines(newPipelines)
+      })
     });
   }
 
-  handleTouchTap() {
-    this.setState({
-      open: true,
+  /**
+   * Sort pipelines by date and filter out pipelines without data
+   * 
+   * @param   {Array} pipelines The pipelines to sort
+   * @return  {Array} Sorted pipelines
+   */
+  sortPipelines(pipelines) {
+    return pipelines.filter(p => p && p.name).sort((a, b) => {
+      return a.buildtime > b.buildtime ? -1 : 1;
     });
   }
 
   render() {
-    let fab = this.state.adminMode ? (
-      <FloatingActionButton style={styles.fab}
-        primary={true}
-        onTouchTap={this.handleTouchTap}>
-        <ContentAdd />
-      </FloatingActionButton>
-    ) : null;
-
-    let standardActions = (
-      <FlatButton
-        label="Okey"
-        secondary={true}
-        onTouchTap={this.handleRequestClose}
-        />
-    );
 
     let pipelineCards = this.state.pipelines.map((pipeline) => {
       if (pipeline && pipeline.name) {
@@ -111,14 +85,6 @@ export default class Main extends React.Component {
           <div className="row">
             {pipelineCards}
           </div>
-          <Dialog
-            open={this.state.open}
-            title="Super Secret Password"
-            actions={standardActions}
-            onRequestClose={this.handleRequestClose}>
-            1-2-3-4-5
-          </Dialog>
-          {fab}
         </div>
       </MuiThemeProvider>
     );

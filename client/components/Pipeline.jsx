@@ -4,7 +4,6 @@
 
 import React from 'react';
 
-import RaisedButton from 'material-ui/lib/raised-button';
 import { CircularProgress } from 'material-ui/lib';
 import { Card, CardHeader, CardText } from 'material-ui/lib/card';
 import Colors from 'material-ui/lib/styles/colors';
@@ -12,7 +11,7 @@ import Colors from 'material-ui/lib/styles/colors';
 import Moment from 'moment';
 
 // Weather icon indicator
-const weatherIconStatuses = ['mdi-weather-sunny', 'mdi-weather-partlycloudy', 'mdi-weather-cloudy', 'mdi-weather-cloudy', 'mdi-weather-pouring', 'mdi-weather-lightning'];
+const weatherIconStatuses = ['sunny', 'partlycloudy', 'cloudy', 'cloudy', 'pouring', 'lightning'];
 
 // FIXME: Break out to style.css
 const styles = {
@@ -46,9 +45,12 @@ const styles = {
 export default class Pipeline extends React.Component {
 
   /**
-   * Calculates which weather icon to use for a pipeline based on 5 latest build results
+   * Calculates which weather icon to use for a pipeline based on pipeline heath.
+   * This function was a bit more advanced back in the days, with api changes it got reduced to this.
+   * Let's keep it for now
    * 
-   * @param pipeline
+   * @param   {Object}  pipeline  The pipeline
+   * @return  {string}  Pre weather icon classname
    */
   weatherIcon(pipeline) {
     return weatherIconStatuses[pipeline.health];
@@ -79,7 +81,7 @@ export default class Pipeline extends React.Component {
           titleStyle={styles.cardTitle}
           subtitle={pipeline.status}
           subtitleStyle={styles.cardSubTitle}>
-          <i className={this.weatherIcon(pipeline) + ' mdi mdi-48px buildstatus'}></i>
+          <i className={'mdi-weather-' + this.weatherIcon(pipeline) + ' mdi mdi-48px buildstatus'}></i>
         </CardHeader>
         <CardText>
           <div className="buildinfo">
