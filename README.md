@@ -2,7 +2,7 @@
 ![Dependencies](https://david-dm.org/karmats/gocd-monitor.svg)
 
 # Go cd monitor
-Build monitor for gocd build server https://www.go.cd/
+Build monitor for Go cd build server https://www.go.cd/
 #### Pipeline status
 * Green - Last pipeline build passed
 * Red - Last pipeline build failed
@@ -28,10 +28,13 @@ Open a terminal and enter
 npm install
 npm start
 ```
-Open `http://localhost:3000`
+Go to `http://localhost:3000`
 
 Enjoy :)
 
+## How it works
+The server polls your defined go server every `goPollingInterval` seconds. The results are then reported to the client using [socket.io](http://socket.io/).
+
 ## Development
 To run the application in development mode, open a terminal and enter `npm run dev-start`. The server and client will be rebuilt when a js or jsx-file changes.
-To run tests, open a terminal and enter `npm test`.
+To run tests, enter `npm test`.
