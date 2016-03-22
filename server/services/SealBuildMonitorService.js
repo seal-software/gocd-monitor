@@ -10,6 +10,7 @@ export default class SealBuildMonitorService extends Service {
 
     constructor() {
         super();
+        this.pollingInterval = conf.goPollingInterval*1000;
     }
 
     /**
@@ -28,7 +29,7 @@ export default class SealBuildMonitorService extends Service {
                 });
             });
         };
-        setInterval(refreshPipelines, conf.goPollingInterval);
+        setInterval(refreshPipelines, this.pollingInterval);
     }
 
     /**
