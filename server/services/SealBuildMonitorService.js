@@ -3,6 +3,7 @@
 import fs from 'fs';
 
 import * as conf from '../../app-config';
+import Logger from '../utils/Logger';
 import Service from './Service';
 
 
@@ -11,6 +12,7 @@ export default class SealBuildMonitorService extends Service {
     constructor() {
         super();
         this.pollingInterval = conf.goPollingInterval*1000;
+        this.buildStatusFile = conf.buildStatusFile;
     }
 
     /**
@@ -19,16 +21,20 @@ export default class SealBuildMonitorService extends Service {
     startPolling() {
         // Function that refreshes all pipelines
         let refreshPipelines = () => {
-            fs.readFile('/Users/matros/Development/projects/seal/seal-build-tools/buildmonitor/out/status.json', (err, data) => {
+            fs.readFile(this.buildStatusFile, (err, data) => {
                 if (err) {
-                    throw err;
+                    Logger.error('Failed to read status file, retrying..');
+                    // Wait a second before trying again
+                    setTimeout(refreshPipelines, 1000);
+                } else {
+                    this.pipelines = this.sealPipelinesToPipelineResult(JSON.parse(data));
+                    this.notifyAllClients('pipelines:updated', this.pipelines);
+                    this.pipelineNames = this.pipelines.map(p => p.name);
+                    this.notifyAllClients('pipelines:names', this.pipelineNames);
                 }
-                this.pipelines = this.sealPipelinesToPipelineResult(JSON.parse(data));
-                this.clients.forEach((client) => {
-                    client.emit('pipelines:update', this.pipelines);
-                });
             });
         };
+        refreshPipelines(this.pollingInterval);
         setInterval(refreshPipelines, this.pollingInterval);
     }
 

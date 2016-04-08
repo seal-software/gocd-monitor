@@ -12,6 +12,8 @@ var config = {
     // Password for go user
     goPassword: 'xxx',
     // How often data from go should be refreshed in seconds
-    goPollingInterval: 15
+    goPollingInterval: 15,
+    // Seal status file
+    buildStatusFile: '/home/dev/monitor/buildmonitor/out/status.json'
 }
 module.exports = config;
