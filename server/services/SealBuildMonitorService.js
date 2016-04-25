@@ -40,7 +40,25 @@ export default class SealBuildMonitorService extends Service {
 
     /**
      * @param   {Object}        sealPipelines       Seal pipeline result
-     * @returns {Array<Object>} Pipeline instances. Example { name : 'id', status : 'passed', buildtime : 1457085089646, author: 'Bobby Malone', health: 2}] }
+     * @returns {Array<Object>} Pipeline instances.
+     *  Example 
+     * { 
+     *    name : 'id,
+     *    buildtime : 1457085089646,
+     *    author: 'Bobby Malone',
+     *    counter: 255,
+     *    paused: false,
+     *    health: 2,
+     *    stageresults: [
+     *      {
+     *        name: 'Build',
+     *        status: 'passed'
+     *      },
+     *      {
+     *        name: 'Test',
+     *        status: 'building'
+     *      }] 
+     * }
      */
     sealPipelinesToPipelineResult(sealPipelines) {
         return sealPipelines.childStatusList.filter(sp => sp.source.startsWith('pipeline')).map((sp) => {
@@ -48,21 +66,33 @@ export default class SealBuildMonitorService extends Service {
                 name: sp.source.substring('pipeline'.length).trim()
             };
 
-            // Status
-            switch (sp.statusType) {
-                case 'OK':
-                    pr.status = 'passed';
-                    break;
-                case 'CANCELLED':
-                    pr.status = 'paused';
-                    break;
-                case 'PENDING':
-                    pr.status = 'building';
-                    break;
-                default:
-                    pr.status = 'failed'
-                    break;
-            }
+            // Stage results
+            pr.stageresults = sp.childStatusList.map((ss) => {
+                let sr = {
+                    name : ss.source.substring('stage'.length).trim(),
+                }
+                switch (ss.statusType) {
+                    case 'OK':
+                        sr.status = 'passed';
+                        break;
+                    case 'CANCELLED':
+                        sr.status = 'cancelled';
+                        break;
+                    case 'PENDING':
+                        sr.status = 'building';
+                        break;
+                    case 'FAILED':
+                        sr.status = 'failed';
+                        break;
+                    default:
+                        sr.status = 'unknown';
+                        break;
+                }
+                return sr;
+            });
+
+            // If seal pipeline is unstable, it's considered paused
+            pr.paused = sp.statusType === 'UNSTABLE';
 
             // Build time
             pr.buildtime = sp.timeStamp;
